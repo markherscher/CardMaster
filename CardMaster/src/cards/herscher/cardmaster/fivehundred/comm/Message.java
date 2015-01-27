@@ -1,12 +1,16 @@
 package cards.herscher.cardmaster.fivehundred.comm;
 
-import java.io.Serializable;
-
-public class Message implements Serializable
+public abstract class Message
 {
-    private static final long serialVersionUID = -3413099676597200828L;
+    public final static int INVALID_ID = 0;
+    
     private final int id;
 
+    public Message()
+    {
+        this(INVALID_ID); 
+    }
+    
     public Message(int id)
     {
         this.id = id;

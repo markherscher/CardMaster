@@ -1,7 +1,9 @@
 package cards.herscher.cardmaster.comm;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Queue;
 
 /**
  * This class is not thread safe.
@@ -9,16 +11,27 @@ import java.util.Arrays;
  */
 public class Frame
 {
-    public final static int MAX_FRAME_LENGTH = 2048;
+    public final static int MAX_FRAME_LENGTH = 1024;
     public final static byte START_BYTE = 0x40;
     public final static byte END_BYTE = 0x41;
     public final static byte ESCAPE_BYTE = (byte) 0x80;
 
     public interface Listener
     {
-        public void onFrameAvailable(byte[] frameBytes);
-        
+        /**
+         * Fired when a call to {@link Frame#parse(byte[])} detects bytes that are invalid for the
+         * frame format. Parsing will continue without error, so this just a notification. This is
+         * fired using the thread that called {@code parse()}, so do not call {@code parse()} from
+         * it.
+         */
         public void onInvalidFrame();
+
+        /**
+         * Fired when bytes are discarded because the end of a frame was not seen before the
+         * {@link Frame#MAX_FRAME_LENGTH} was reached. This is fired using the thread that called
+         * {@code parse()}, so do not call {@code parse()} from it.
+         */
+        public void onBytesDiscarded();
     }
 
     private enum ParseState
@@ -29,34 +42,104 @@ public class Frame
     private final Listener listener;
     private final ByteBuffer rxBuffer;
     private final byte[] createWorkingBuffer;
+    private final Queue<byte[]> completeFrames;
     private ParseState parseState;
+
+    public Frame()
+    {
+        this(null);
+    }
 
     public Frame(Listener listener)
     {
         this.listener = listener;
         parseState = ParseState.SYNC_TO_START;
+        completeFrames = new ArrayDeque<byte[]>();
+        rxBuffer = ByteBuffer.allocate(MAX_FRAME_LENGTH);
 
         // *2 for worst-case escaping
-        rxBuffer = ByteBuffer.allocate(MAX_FRAME_LENGTH * 2);
         createWorkingBuffer = new byte[MAX_FRAME_LENGTH * 2];
     }
+    
+    public boolean parse(byte[] rawBytes)
+    {
+        return parse(rawBytes, rawBytes.length);
+    }
 
-    public void parse(byte[] rawBytes)
+    public boolean parse(byte[] rawBytes, int length)
     {
         if (rawBytes == null)
         {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("rawBytes cannot be null");
+        }
+        
+        if (length < 0 || length > rawBytes.length)
+        {
+            throw new IllegalArgumentException("length is invalid");
         }
 
-        if (rawBytes.length > 0)
-        {
-            int startIndex = 0;
+        byte currentByte;
+        boolean foundFrame = false;
 
-            while (startIndex >= 0)
+        for (int i = 0; i < length; i++)
+        {
+            currentByte = rawBytes[i];
+
+            switch (parseState)
             {
-                startIndex = subParse(rawBytes, startIndex);
+                case SYNC_TO_START:
+                    // Search until the start byte is found
+                    if (currentByte == START_BYTE)
+                    {
+                        parseState = ParseState.NORMAL;
+                    }
+                    break;
+
+                case UNESCAPING:
+                    // Unescape the byte and store it
+                    currentByte = (byte) ~currentByte;
+                    parseState = ParseState.NORMAL;
+                    storeParseByte(currentByte);
+                    break;
+
+                case NORMAL:
+                    if (currentByte == ESCAPE_BYTE)
+                    {
+                        // Next byte should be unescaped
+                        parseState = ParseState.UNESCAPING;
+                    }
+                    else if (currentByte == END_BYTE)
+                    {
+                        // This is the end of the frame
+                        foundFrame = true;
+                        byte[] frameBytes = Arrays.copyOf(rxBuffer.array(), rxBuffer.position());
+                        completeFrames.add(frameBytes);
+                        resetParseState();
+                    }
+                    else if (currentByte == START_BYTE)
+                    {
+                        if (listener != null)
+                        {
+                            listener.onInvalidFrame();
+                        }
+
+                        // We found an unexpected start byte. This is an error. Discard it all.
+                        resetParseState();
+                    }
+                    else
+                    {
+                        storeParseByte(currentByte);
+                    }
+                    break;
             }
         }
+
+        return foundFrame;
+    }
+
+    public byte[] getNextReceivedFrame()
+    {
+        return completeFrames.poll();
     }
 
     public byte[] create(byte[] rawBytes)
@@ -92,69 +175,6 @@ public class Frame
         return Arrays.copyOf(createWorkingBuffer, index);
     }
 
-    private int subParse(byte[] rawBytes, int start)
-    {
-        byte currentByte;
-
-        for (int i = start; i < rawBytes.length; i++)
-        {
-            currentByte = rawBytes[i];
-
-            switch (parseState)
-            {
-                case SYNC_TO_START:
-                    // Search until the start byte is found
-                    if (currentByte == START_BYTE)
-                    {
-                        parseState = ParseState.NORMAL;
-                    }
-                    break;
-
-                case UNESCAPING:
-                    // Unescape the byte and store it
-                    currentByte = (byte) ~currentByte;
-                    parseState = ParseState.NORMAL;
-                    storeParseByte(currentByte);
-                    break;
-
-                case NORMAL:
-                    if (currentByte == ESCAPE_BYTE)
-                    {
-                        // Next byte should be unescaped
-                        parseState = ParseState.UNESCAPING;
-                    }
-                    else if (currentByte == END_BYTE)
-                    {
-                        // This is the end of the frame
-                        byte[] frameBytes = Arrays.copyOf(rxBuffer.array(), rxBuffer.position());
-                        resetParseState();
-                        if (listener != null)
-                        {
-                            listener.onFrameAvailable(frameBytes);
-                        }
-                        return i;
-                    }
-                    else if (currentByte == START_BYTE)
-                    {
-                        if (listener != null)
-                        {
-                            listener.onInvalidFrame();
-                        }
-                        
-                        // We found an unexpected start byte. This is an error. Discard it all.
-                        resetParseState();
-                    }
-                    else
-                    {
-                        storeParseByte(currentByte);
-                    }
-                    break;
-            }
-        }
-
-        return -1;
-    }
-
     private void resetParseState()
     {
         parseState = ParseState.SYNC_TO_START;
@@ -172,6 +192,11 @@ public class Frame
         {
             // Frame is too long; discard it all
             resetParseState();
+
+            if (listener != null)
+            {
+                listener.onBytesDiscarded();
+            }
         }
     }
 }
