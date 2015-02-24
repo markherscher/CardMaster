@@ -1,9 +1,9 @@
-package cards.herscher.cardmaster.comm;
+package cards.herscher.comm.wifi;
 
 import java.io.IOException;
 import java.net.Socket;
 
-import cards.herscher.cardmaster.Logger;
+import cards.herscher.comm.Logger;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,7 +17,6 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.widget.Toast;
 
 /**
  * Created by MarkHerscher on 11/11/2014.

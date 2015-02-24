@@ -24,8 +24,8 @@ import java.util.Random;
 
 import cards.herscher.cardmaster.Logger;
 import cards.herscher.cardmaster.R;
-import cards.herscher.cardmaster.comm.WifiDirectClient;
-import cards.herscher.cardmaster.comm.WifiDirectServer;
+import cards.herscher.comm.wifi.WifiDirectClient;
+import cards.herscher.comm.wifi.WifiDirectServer;
 
 /**
  * Created by MarkHerscher on 11/11/2014.

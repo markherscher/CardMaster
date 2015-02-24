@@ -1,4 +1,4 @@
-package cards.herscher.cardmaster.fivehundred.comm;
+package cards.herscher.cardmaster.checkers.comm;
 
 import cards.herscher.comm.message.Message;
 

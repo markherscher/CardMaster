@@ -1,4 +1,4 @@
-package cards.herscher.cardmaster.comm;
+package cards.herscher.comm.wifi;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import cards.herscher.cardmaster.Logger;
+import cards.herscher.comm.Logger;
 
 /**
  * This class is not thread-safe.

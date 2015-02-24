@@ -1,4 +1,5 @@
-package cards.herscher.cardmaster.comm;
+package cards.herscher.comm;
+
 
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -6,7 +7,8 @@ import java.util.Arrays;
 import java.util.Queue;
 
 /**
- * This class is not thread safe.
+ * Thread-safety: {@link #create(byte[])} and {@link #parse(byte[])} can be safely executed
+ * concurrently, but multiple concurrent calls to the same method is not safe.
  * 
  */
 public class Frame
@@ -60,7 +62,7 @@ public class Frame
         // *2 for worst-case escaping
         createWorkingBuffer = new byte[MAX_FRAME_LENGTH * 2];
     }
-    
+
     public boolean parse(byte[] rawBytes)
     {
         return parse(rawBytes, rawBytes.length);
@@ -72,7 +74,7 @@ public class Frame
         {
             throw new IllegalArgumentException("rawBytes cannot be null");
         }
-        
+
         if (length < 0 || length > rawBytes.length)
         {
             throw new IllegalArgumentException("length is invalid");
@@ -140,6 +142,11 @@ public class Frame
     public byte[] getNextReceivedFrame()
     {
         return completeFrames.poll();
+    }
+    
+    public boolean isFrameAvailable()
+    {
+        return completeFrames.peek() != null;
     }
 
     public byte[] create(byte[] rawBytes)

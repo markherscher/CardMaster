@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 import cards.herscher.cardmaster.R;
-import cards.herscher.cardmaster.comm.WifiDirectServer;
+import cards.herscher.comm.wifi.WifiDirectServer;
 import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pManager;

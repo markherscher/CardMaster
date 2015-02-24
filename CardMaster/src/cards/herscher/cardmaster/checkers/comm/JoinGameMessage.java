@@ -1,10 +1,10 @@
-package cards.herscher.cardmaster.fivehundred.comm;
+package cards.herscher.cardmaster.checkers.comm;
 
 import cards.herscher.comm.message.Message;
 
 public class JoinGameMessage extends Message
 {
-    private final String name;
+    private final String playerName;
     
     /**
      * Required for serialization. Do not use directly.
@@ -14,18 +14,18 @@ public class JoinGameMessage extends Message
         this("");
     }
     
-    public JoinGameMessage(String name)
+    public JoinGameMessage(String playerName)
     {
-        if (name == null || name.length() == 0)
+        if (playerName == null)
         {
             throw new IllegalArgumentException();
         }
         
-        this.name = name;
+        this.playerName = playerName;
     }
 
     public String getPlayerName()
     {
-        return name;
+        return playerName;
     }
 }

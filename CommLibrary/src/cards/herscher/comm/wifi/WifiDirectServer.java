@@ -1,4 +1,4 @@
-package cards.herscher.cardmaster.comm;
+package cards.herscher.comm.wifi;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;

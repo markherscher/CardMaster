@@ -2,10 +2,6 @@ package cards.herscher.cardmaster.fivehundred.ui;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -13,8 +9,6 @@ import com.esotericsoftware.kryo.io.Output;
 
 import cards.herscher.cardmaster.R;
 import cards.herscher.cardmaster.fivehundred.comm.HandshakeMessage;
-import cards.herscher.cardmaster.fivehundred.comm.JoinGameMessage;
-import cards.herscher.cardmaster.fivehundred.comm.Message;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;

@@ -4,9 +4,9 @@ import java.net.Socket;
 import java.util.Arrays;
 
 import cards.herscher.cardmaster.R;
-import cards.herscher.cardmaster.comm.WifiDirectClient;
-import cards.herscher.cardmaster.comm.WifiDirectServer;
 import cards.herscher.cardmaster.ui.DialogManager;
+import cards.herscher.comm.wifi.WifiDirectClient;
+import cards.herscher.comm.wifi.WifiDirectServer;
 import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pDevice;
